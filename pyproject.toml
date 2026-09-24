@@ -1,0 +1,23 @@
+[project]
+name = "liblp"
+version = "0.1.0"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "ml-dtypes>=0.6.0",
+    "numpy>=2.5.3",
+    "ruff>=0.16.8",
+    "torch>=2.14.0",
+    "triton>=3.8.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["liblp*"]
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu126" }
+triton = { index = "pytorch-cu126" }
