@@ -9,6 +9,7 @@ from liblp.numpy.fp8e5m2 import *
 from liblp.numpy.fp8e4m3 import *
 from liblp.triton.fp8e4m3 import *
 from liblp.triton.fp8e5m2 import *
+from liblp.torch.lns8i4f3 import *
 
 import numpy as np
 import torch
@@ -118,7 +119,7 @@ class lptensor(object):
             return lpbackend.np
         elif isinstance(data, torch.Tensor):
             if torch.cuda.is_available():
-                return lpbackend.triton
+                return lpbackend.torch
             else:
                 return lpbackend.torch
         else:

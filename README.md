@@ -85,7 +85,7 @@ liblp/
 | FP8 E4M3      |✔      |✔    |
 | FP8 E5M2      |✔      |✔    |
 | FP4 (Limited) |✔      |𝓍    |
-| LNS8 I4F3     |✓      |𝓍    |
+| LNS8 I4F3     |✔      |✔    |
 
 ## Installation
 
