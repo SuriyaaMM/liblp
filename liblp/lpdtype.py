@@ -18,6 +18,10 @@ class fp8e4m3(lpdtype):
     bits = 8
     name = "fp8e4m3"
 
+class fp8e5m2(lpdtype):
+    bits = 8
+    name = "fp8e5m2"
+
 class lns8i4f3(lpdtype):
     bits = 8
     name = "lns8i4f3"

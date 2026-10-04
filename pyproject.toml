@@ -3,9 +3,13 @@ name = "liblp"
 version = "0.1.0"
 requires-python = ">=3.13,<3.14"
 dependencies = [
+    "matplotlib>=3.11.2",
     "ml-dtypes>=0.6.0",
     "numpy>=2.5.3",
+    "pandas>=3.0.6",
     "ruff>=0.16.8",
+    "seaborn>=0.13.2",
+    "tabulate>=0.10.0",
     "torch>=2.14.0",
     "triton>=3.8.0",
 ]

@@ -1,5 +1,5 @@
 .venv/
 __pycache__/
 liblp.egg-info/
-test/
 uv.lock
+analysis/

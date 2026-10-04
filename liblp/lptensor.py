@@ -3,12 +3,18 @@ from liblp.lpbackend import lpbackend
 from liblp.lpregistry import lpregistry
 from liblp.lpop import lpop
 
-from liblp.numpy.fp4_e2m1 import *
-from liblp.numpy.lns8_i4f3 import *
-from liblp.triton.fp8_e4m3 import *
+from liblp.numpy.fp4e2m1 import *
+from liblp.numpy.lns8i4f3 import *
+from liblp.numpy.fp8e5m2 import *
+from liblp.numpy.fp8e4m3 import *
+from liblp.triton.fp8e4m3 import *
+from liblp.triton.fp8e5m2 import *
 
 import numpy as np
 import torch
+import logging
+
+logger = logging.getLogger(__name__)
 
 class lptensor(object):
     def __init__(self, data: np.ndarray | torch.Tensor, dtype: lpdtype):
@@ -115,22 +121,5 @@ class lptensor(object):
                 return lpbackend.triton
             else:
                 return lpbackend.torch
-
-
-if __name__ == "__main__":
-    x = lptensor(data=torch.tensor([1.0, 2.0, 3.0, 5.0], device="cuda"), dtype=fp8e4m3)
-    y = lptensor(data=torch.tensor([2.0, 3.0, 4.0, 5.0], device="cuda"), dtype=fp8e4m3)
-
-    xay = x + y
-    # xsy = x - y
-    xdy = x / y
-    xmy = x * y
-
-    print(x)
-    print(y)
-    print(f"x = {x.get()}")
-    print(f"y = {y.get()}")
-    print(f"x + y = {xay.get()}")
-    # print(f"x - y = {xsy.get()}")
-    print(f"x * y = {xmy.get()}")
-    print(f"x / y = {xdy.get()}")
+        else:
+            logger.error(f"cannot infer valid backend for {data}")
