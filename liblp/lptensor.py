@@ -4,13 +4,14 @@ from liblp.lpregistry import lpregistry
 from liblp.lpop import lpop
 
 # from liblp.numpy.fp4e2m1 import *
-from liblp.numpy.mxi4fp32 import *
+# from liblp.numpy.mxi4fp32 import *
 # from liblp.numpy.lns8i4f3 import *
 # from liblp.numpy.fp8e5m2 import *
 # from liblp.numpy.fp8e4m3 import *
 # from liblp.triton.fp8e4m3 import *
 # from liblp.triton.fp8e5m2 import *
 # from liblp.torch.lns8i4f3 import *
+from liblp.torch.mxi4fp32 import * 
 
 import numpy as np
 import torch
@@ -49,65 +50,49 @@ class lptensor(object):
 
         return obj
 
+    def __dispatch_op(self, other, op: lpop):
+        if not self.dtype.microscaling:
+            res_data, res_scale = lpregistry.dispatch(
+                op, 
+                self.dtype.__class__, 
+                self.backend, 
+                self.enc_data, 
+                other.enc_data,
+            )
+            return lptensor.__from_encoded(
+                res_data,
+                res_scale,
+                self.dtype.__class__,
+                self.backend,
+            )
+        else:
+            res_data, res_scale = lpregistry.dispatch(
+                op, 
+                self.dtype.__class__, 
+                self.backend, 
+                self.enc_data,
+                self.enc_scale, 
+                other.enc_data,
+                other.enc_scale,
+            )
+            return lptensor.__from_encoded(
+                res_data,
+                res_scale,
+                self.dtype.__class__,
+                self.backend,
+            )
+
     def __mul__(self, other):
-        res_data, res_scale = lpregistry.dispatch(
-            lpop.mul, 
-            self.dtype.__class__, 
-            self.backend, 
-            self.enc_data, 
-            other.enc_data,
-        )
-        return lptensor.__from_encoded(
-            res_data,
-            res_scale,
-            self.dtype.__class__,
-            self.backend,
-        )   
+        return self.__dispatch_op(other, lpop.mul)
      
     def __add__(self, other):
-        res_data, res_scale = lpregistry.dispatch(
-            lpop.add, 
-            self.dtype.__class__, 
-            self.backend, 
-            self.enc_data, 
-            other.enc_data,
-        )
-        return lptensor.__from_encoded(
-            res_data,
-            res_scale,
-            self.dtype.__class__,
-            self.backend,
-        )
+        return self.__dispatch_op(other, lpop.add)
 
     def __truediv__(self, other):
-        res_data, res_scale = lpregistry.dispatch(
-            lpop.div, 
-            self.dtype.__class__, 
-            self.backend, 
-            self.enc_data, 
-            other.enc_data,
-        )
-        return lptensor.__from_encoded(
-            res_data,
-            res_scale,
-            self.dtype.__class__,
-            self.backend,
-        )
+        return self.__dispatch_op(other, lpop.div)
 
     def __sub__(self, other):
-        res_data, res_scale = lpregistry.dispatch(
-            lpop.sub, 
-            self.dtype.__class__, 
-            self.backend, 
-            self.enc_data, 
-            other.enc_data,
-        )
-        return lptensor.__from_encoded(
-            res_data,
-            res_scale,
-            self.dtype.__class__,
-            self.backend,
-        )
+        return self.__dispatch_op(other, lpop.sub)
 
     def get(self):
         if not self.dtype.microscaling:
@@ -128,3 +113,4 @@ class lptensor(object):
                 return lpbackend.torch
         else:
             logger.error(f"cannot infer valid backend for {data}")
+            raise ValueError()
