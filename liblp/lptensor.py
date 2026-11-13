@@ -3,13 +3,14 @@ from liblp.lpbackend import lpbackend
 from liblp.lpregistry import lpregistry
 from liblp.lpop import lpop
 
-from liblp.numpy.fp4e2m1 import *
-from liblp.numpy.lns8i4f3 import *
-from liblp.numpy.fp8e5m2 import *
-from liblp.numpy.fp8e4m3 import *
-from liblp.triton.fp8e4m3 import *
-from liblp.triton.fp8e5m2 import *
-from liblp.torch.lns8i4f3 import *
+# from liblp.numpy.fp4e2m1 import *
+from liblp.numpy.mxi4fp32 import *
+# from liblp.numpy.lns8i4f3 import *
+# from liblp.numpy.fp8e5m2 import *
+# from liblp.numpy.fp8e4m3 import *
+# from liblp.triton.fp8e4m3 import *
+# from liblp.triton.fp8e5m2 import *
+# from liblp.torch.lns8i4f3 import *
 
 import numpy as np
 import torch
@@ -109,8 +110,11 @@ class lptensor(object):
         )
 
     def get(self):
-        return lpregistry.dispatch(lpop.decode, type(self.dtype), self.backend, self.enc_data)
-
+        if not self.dtype.microscaling:
+            return lpregistry.dispatch(lpop.decode, type(self.dtype), self.backend, self.enc_data)
+        else:
+            return lpregistry.dispatch(lpop.decode, type(self.dtype), self.backend, self.enc_data, self.enc_scale)
+                
     def __str__(self):
         return f"{self.dtype}({self.enc_data})"
 

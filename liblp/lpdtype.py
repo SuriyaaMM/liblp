@@ -6,6 +6,7 @@ import numpy as np
 class lpdtype(ABC):
     bits: int = None
     name: str = "lpdtype"
+    microscaling: bool = False
 
     def __str__(self):
         return f"{self.name}"
@@ -13,18 +14,36 @@ class lpdtype(ABC):
 class fp4e2m1(lpdtype):
     bits = 4
     name = "fp4e2m1"
+    microscaling = True
+
+class mxi4fp32(lpdtype):
+    # 32 values share a common fp32 scale
+    # (4 * 32 + 32) / 32 => 5 bits per value on average
+    bits = 5
+    name = "mxi4fp32"
+    microscaling = True
+    scale_block_size = 32
+    int4_min = -8
+    int4_max = 7
+    fp32_min = np.finfo(np.float32).min
+    fp32_max = np.finfo(np.float32).max
+    
+
 
 class fp8e4m3(lpdtype):
     bits = 8
     name = "fp8e4m3"
+    microscaling = False
 
 class fp8e5m2(lpdtype):
     bits = 8
     name = "fp8e5m2"
+    microscaling = False
 
 class lns8i4f3(lpdtype):
     bits = 8
     name = "lns8i4f3"
+    microscaling = False
 
     NINF: np.ndarray = np.array(0xFF, dtype=np.uint8)
     INF: np.ndarray = np.array(0x7F, dtype=np.uint8)
