@@ -3,3 +3,4 @@ __pycache__/
 liblp.egg-info/
 uv.lock
 analysis/
+build/
