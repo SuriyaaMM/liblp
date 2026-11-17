@@ -11,7 +11,7 @@ from liblp.lpop import lpop
 # from liblp.triton.fp8e4m3 import *
 # from liblp.triton.fp8e5m2 import *
 # from liblp.torch.lns8i4f3 import *
-from liblp.torch.mxi4fp32 import * 
+from liblp.triton.mxi4fp32 import * 
 
 import numpy as np
 import torch
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class lptensor(object):
     def __init__(self, data: np.ndarray | torch.Tensor, dtype: lpdtype):
+        self.shape = tuple(data.shape)
         self.raw_data = data
         self.backend = self.__infer_backend(data)
         self.enc_data, self.enc_scale = lpregistry.dispatch(
@@ -39,12 +40,14 @@ class lptensor(object):
         enc_scale,
         dtype: lpdtype,
         backend: lpbackend,
+        shape = None
     ):
         obj = cls.__new__(cls)
 
         obj.raw_data = None
         obj.enc_data = enc_data
         obj.enc_scale = enc_scale
+        obj.shape = shape
         obj.dtype = dtype()
         obj.backend = backend
 
@@ -94,6 +97,18 @@ class lptensor(object):
     def __sub__(self, other):
         return self.__dispatch_op(other, lpop.sub)
 
+    def __matmul__(self, other):
+        M, K  = self.shape
+        N, K2 = other.shape
+        assert K == K2, f"matmul shape mismatch: {self.shape} @ ({other.shape}).T"
+
+        return lpregistry.dispatch(
+            lpop.matmul, self.dtype.__class__, self.backend,
+            self.enc_data, self.enc_scale, self.shape,
+            other.enc_data, other.enc_scale, other.shape,
+        )
+        
+
     def get(self):
         if not self.dtype.microscaling:
             return lpregistry.dispatch(lpop.decode, type(self.dtype), self.backend, self.enc_data)
@@ -108,7 +123,7 @@ class lptensor(object):
             return lpbackend.np
         elif isinstance(data, torch.Tensor):
             if torch.cuda.is_available():
-                return lpbackend.torch
+                return lpbackend.triton
             else:
                 return lpbackend.torch
         else:

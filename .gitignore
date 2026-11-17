@@ -4,3 +4,5 @@ liblp.egg-info/
 uv.lock
 analysis/
 build/
+*.pt
+data/

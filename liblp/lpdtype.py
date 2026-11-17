@@ -4,7 +4,7 @@ import math
 import numpy as np
 
 class lpdtype(ABC):
-    bits: int = None
+    bits: int = -1
     name: str = "lpdtype"
     microscaling: bool = False
 

@@ -7,3 +7,4 @@ class lpop(enum.Enum):
     sub = "subtract"
     mul = "multiplication"
     div = "division"
+    matmul = "matmul"
