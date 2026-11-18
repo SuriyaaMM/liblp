@@ -180,6 +180,62 @@ def __gemv(
         mask=mask_x,
     )
 
+@triton.autotune(
+    configs=[
+        triton.Config({"tile_n": 8, "tile_k": 128}, num_warps=4, num_stages=2),
+        triton.Config({"tile_n": 16, "tile_k": 128}, num_warps=4, num_stages=2),
+        triton.Config({"tile_n": 16, "tile_k": 256}, num_warps=4, num_stages=2),
+        triton.Config({"tile_n": 32, "tile_k": 64}, num_warps=4, num_stages=2),
+        triton.Config({"tile_n": 4, "tile_k": 256}, num_warps=4, num_stages=3),
+    ],
+    key=["n", "kp"],
+)
+@triton.jit
+def __gemv_w4a16(
+    w_ptr,  
+    s_ptr,  
+    x_ptr,  
+    o_ptr,
+    n,
+    kp,
+    stride_w,
+    stride_s,
+    tile_n: tl.constexpr,
+    tile_k: tl.constexpr,
+):
+    pid = tl.program_id(axis=0)
+    off_n = pid * tile_n + tl.arange(0, tile_n)
+    mask_n = off_n < n
+
+    acc = tl.zeros((tile_n,), dtype=tl.float32)
+
+    for kb in tl.range(0, kp, tile_k):
+        off_k = kb + tl.arange(0, tile_k)
+        mask_k = off_k < kp
+        mask = mask_n[:, None] & mask_k[None, :]
+
+        w = tl.load(
+            w_ptr + off_n[:, None] * stride_w + off_k[None, :], mask=mask, other=0
+        )
+        s = tl.load(
+            s_ptr + off_n[:, None] * stride_s + (off_k // 16)[None, :],
+            mask=mask,
+            other=0.0,
+        )
+    
+        x_e = tl.load(x_ptr + 2 * off_k, mask=mask_k, other=0.0).to(tl.float32)
+        x_o = tl.load(x_ptr + 2 * off_k + 1, mask=mask_k, other=0.0).to(tl.float32)
+
+        hi = ((w >> 4) & 0x0F).to(tl.int32)
+        lo = (w & 0x0F).to(tl.int32)
+        hi = tl.where(hi >= 8, hi - 16, hi)
+        lo = tl.where(lo >= 8, lo - 16, lo)
+
+        part = hi.to(tl.float32) * x_e[None, :] + lo.to(tl.float32) * x_o[None, :]
+        acc += tl.sum(part * s, axis=1)
+
+    tl.store(o_ptr + off_n, acc, mask=mask_n)
+
 # ------------------------------------------------------------
 # utility functions
 # ------------------------------------------------------------
@@ -289,3 +345,24 @@ def matmul(
         mxi4fp32.scale_block_size // 2,
     )
     return o_fp32
+
+@lpregistry.register(
+    lpop.mv_w4a16,
+    mxi4fp32,
+    lpbackend.triton,
+)
+def mv_w4a16(
+    w_u8: torch.Tensor, 
+    w_scales: torch.Tensor, 
+    x: torch.Tensor,
+):
+    n, kp = w_u8.shape
+    
+    x = x.contiguous()
+    out = torch.empty(n, dtype=torch.float32, device=w_u8.device)
+    grid = lambda meta: (triton.cdiv(n, meta["tile_n"]),)
+
+    __gemv_w4a16[grid](
+        w_u8, w_scales, x, out, n, kp, w_u8.stride(0), w_scales.stride(0)
+    )
+    return out

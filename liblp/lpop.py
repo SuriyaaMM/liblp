@@ -8,3 +8,4 @@ class lpop(enum.Enum):
     mul = "multiplication"
     div = "division"
     matmul = "matmul"
+    mv_w4a16 = "mv_w4a16"
