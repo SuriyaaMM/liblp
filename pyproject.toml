@@ -3,6 +3,8 @@ name = "liblp"
 version = "0.1.0"
 requires-python = ">=3.13,<3.14"
 dependencies = [
+    "accelerate>=1.16.0",
+    "datasets>=5.2.0",
     "matplotlib>=3.11.2",
     "ml-dtypes>=0.6.0",
     "numpy>=2.5.3",

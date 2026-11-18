@@ -76,6 +76,8 @@ liblp/
 │
 ├── numpy/ # numpy backend
 └── triton/ # triton backend
+└── torch/ # torch backend
+└── models/ # implementation of existing models
 ```
 
 ## Support Matrix
@@ -86,6 +88,8 @@ liblp/
 | FP8 E5M2      |✔      |✔    |
 | FP4 (Limited) |✔      |𝓍    |
 | LNS8 I4F3     |✔      |✔    |
+| MXI4FP32      |𝓍      |✔    |
+| MXFP4 (OCP)   |𝓍      |✔    |
 
 ## Installation
 
