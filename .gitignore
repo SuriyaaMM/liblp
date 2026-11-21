@@ -6,3 +6,4 @@ analysis/
 build
 *.pt
 data/
+kernels/

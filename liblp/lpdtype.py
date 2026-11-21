@@ -28,6 +28,16 @@ class mxi4fp32(lpdtype):
     fp32_min = np.finfo(np.float32).min
     fp32_max = np.finfo(np.float32).max
 
+class mxi8fp32(lpdtype):
+    bits = 9
+    name = "mxi8fp32"
+    microscaling = True
+    scale_block_size = 32
+    int8_min = -128
+    int8_max = 127
+    fp32_min = np.finfo(np.float32).min
+    fp32_max = np.finfo(np.float32).max
+
 class mxfp4(lpdtype):
     bits = 5
     name = "mxfp4"

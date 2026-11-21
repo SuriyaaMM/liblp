@@ -2,6 +2,7 @@ from liblp.lpdtype import *
 from liblp.lpbackend import lpbackend
 from liblp.lpregistry import lpregistry
 from liblp.lpop import lpop
+from typing import Literal
 
 # from liblp.numpy.fp4e2m1 import *
 # from liblp.numpy.mxi4fp32 import *
@@ -11,7 +12,8 @@ from liblp.lpop import lpop
 # from liblp.triton.fp8e4m3 import *
 # from liblp.triton.fp8e5m2 import *
 # from liblp.torch.lns8i4f3 import *
-from liblp.triton.mxi4fp32 import * 
+# from liblp.triton.mxi4fp32 import * 
+from liblp.torch.mxi8fp32 import *
 
 import numpy as np
 import torch
@@ -107,6 +109,26 @@ class lptensor(object):
             self.enc_data, self.enc_scale, self.shape,
             other.enc_data, other.enc_scale, other.shape,
         )
+
+    def mm(self, other, accumulated_precision: Literal["a32", "a16", "a8", "a4"]):
+        M, K  = self.shape
+        N, K2 = other.shape
+        assert K == K2, f"[lptensor | mm()] : matmul shape mismatch: {self.shape} @ ({other.shape}).T"
+
+        if accumulated_precision == "a32":
+            return lpregistry.dispatch(
+                lpop.mm_a32, self.dtype.__class__, self.backend,
+                self.enc_data, self.enc_scale, self.shape,
+                other.enc_data, other.enc_scale, other.shape,
+            )
+        elif accumulated_precision == "a16":
+            return lpregistry.dispatch(
+                lpop.mm_a16, self.dtype.__class__, self.backend,
+                self.enc_data, self.enc_scale, self.shape,
+                other.enc_data, other.enc_scale, other.shape,
+            )
+        else:
+            raise NotImplementedError(f"[lptensor | mm()] : accumulated_precision({accumulated_precision}) is not implemented yet")
         
 
     def get(self):
@@ -123,7 +145,7 @@ class lptensor(object):
             return lpbackend.np
         elif isinstance(data, torch.Tensor):
             if torch.cuda.is_available():
-                return lpbackend.triton
+                return lpbackend.torch
             else:
                 return lpbackend.torch
         else:
